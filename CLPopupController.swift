@@ -196,7 +196,9 @@ extension CLPopupController {
 
     func showCalendar() {
         CLPopoverManager.showCalendar()
-        CLPopoverManager.showFlop()
+        CLPopoverManager.showFlop { config in
+            config.identifier = "AAA"
+        }
     }
 
     func showDragView() {

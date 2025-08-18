@@ -55,23 +55,11 @@ public extension CLPopoverManager {
                 shared.windows.values.forEach { $0.isHidden = true }
                 shared.windows.removeAll()
             }
-            guard !(controller.config.popoverMode == .queue && !shared.windows.isEmpty) else {
+            if controller.config.popoverMode == .queue, !shared.windows.isEmpty {
                 shared.waitQueue[controller.key] = (controller: controller, enqueueTime: Date())
                 return
             }
-            let window = CLPopoverWindow(frame: UIScreen.main.bounds)
-            window.backgroundColor = .clear
-            if #available(iOS 13.0, *) {
-                window.overrideUserInterfaceStyle = .init(rawValue: controller.config.userInterfaceStyleOverride.rawValue) ?? .light
-            }
-            window.autoHideWhenPenetrated = controller.config.autoHideWhenPenetrated
-            window.allowsEventPenetration = controller.config.allowsEventPenetration
-            window.windowLevel = .alert + 50
-            window.rootViewController = controller
-            window.makeKeyAndVisible()
-            shared.windows[controller.key] = window
-            shared.waitQueue.removeValue(forKey: controller.key)
-            controller.showAnimation(completion: completion)
+            display(controller, completion: completion)
         }
     }
 
@@ -91,13 +79,13 @@ public extension CLPopoverManager {
                 completion?()
                 shared.windows.removeValue(forKey: key)
                 shared.dismissingKeys.remove(key)
-                guard !(shared.windows.isEmpty && shared.waitQueue.isEmpty) else { return dismissAll() }
-                guard let nextController = shared.waitQueue.values.sorted(by: {
+                if shared.windows.isEmpty, shared.waitQueue.isEmpty { return dismissAll() }
+                guard shared.windows.isEmpty, let nextController = shared.waitQueue.values.sorted(by: {
                     $0.controller.config.popoverPriority != $1.controller.config.popoverPriority ?
                         $0.controller.config.popoverPriority > $1.controller.config.popoverPriority :
                         $0.enqueueTime < $1.enqueueTime
                 }).first?.controller else { return }
-                show(nextController)
+                display(nextController)
             }
         }
     }
@@ -110,5 +98,23 @@ public extension CLPopoverManager {
             shared.windows.values.forEach { $0.isHidden = true }
             shared.windows.removeAll()
         }
+    }
+}
+
+private extension CLPopoverManager {
+    static func display(_ controller: CLPopoverProtocol, completion: (() -> Void)? = nil) {
+        let window = CLPopoverWindow(frame: UIScreen.main.bounds)
+        window.backgroundColor = .clear
+        if #available(iOS 13.0, *) {
+            window.overrideUserInterfaceStyle = .init(rawValue: controller.config.userInterfaceStyleOverride.rawValue) ?? .light
+        }
+        window.autoHideWhenPenetrated = controller.config.autoHideWhenPenetrated
+        window.allowsEventPenetration = controller.config.allowsEventPenetration
+        window.windowLevel = .alert + 50
+        window.rootViewController = controller
+        window.makeKeyAndVisible()
+        shared.windows[controller.key] = window
+        shared.waitQueue.removeValue(forKey: controller.key)
+        controller.showAnimation(completion: completion)
     }
 }
