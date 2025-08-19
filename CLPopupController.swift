@@ -58,7 +58,7 @@ extension CLPopupController {
         }
         do {
             let model = CLPopupModel()
-            model.title = "可拖拽弹窗(重叠)"
+            model.title = "可拖拽弹窗(重叠-挂起)"
             model.callback = { [weak self] in
                 self?.showDragView()
             }
@@ -206,14 +206,26 @@ extension CLPopupController {
             configure.shouldAutorotate = true
             configure.supportedInterfaceOrientations = .all
         }
-        CLPopoverManager.showOneAlert(configCallback: { configure in
-            configure.shouldAutorotate = true
-            configure.supportedInterfaceOrientations = .all
-            configure.allowsEventPenetration = true
-            configure.autoHideWhenPenetrated = true
-            configure.popoverMode = .interrupt
-            configure.userInterfaceStyleOverride = .unspecified
-        }, title: "我是一个按钮", message: "我有一个按钮")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            CLPopoverManager.showOneAlert(configCallback: { configure in
+                configure.shouldAutorotate = true
+                configure.supportedInterfaceOrientations = .all
+                configure.allowsEventPenetration = true
+                configure.autoHideWhenPenetrated = true
+                configure.popoverMode = .interrupt
+                configure.userInterfaceStyleOverride = .unspecified
+            }, title: "我是插队模式", message: "我会插队")
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            CLPopoverManager.showOneAlert(configCallback: { configure in
+                configure.shouldAutorotate = true
+                configure.supportedInterfaceOrientations = .all
+                configure.allowsEventPenetration = true
+                configure.autoHideWhenPenetrated = true
+                configure.popoverMode = .suspend
+                configure.userInterfaceStyleOverride = .unspecified
+            }, title: "我是挂起模式", message: "我会挂起前面弹窗，关闭后恢复")
+        }
     }
 
     func showOneAlert() {

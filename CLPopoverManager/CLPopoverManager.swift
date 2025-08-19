@@ -20,7 +20,9 @@ import UIKit
 
     private var waitQueue = [String: (controller: CLPopoverProtocol, enqueueTime: Date)]()
 
-    private var windows = [String: CLPopoverWindow]()
+    private var activeWindows = [CLPopoverWindow]()
+
+    private var suspendedWindows = [String: [CLPopoverWindow]]()
 
     private var dismissingKeys = Set<String>()
 }
@@ -29,7 +31,7 @@ public extension CLPopoverManager {
     /// 显示自定义弹窗
     static func show(_ controller: CLPopoverProtocol, completion: (() -> Void)? = nil) {
         DispatchQueue.main.async {
-            guard !shared.windows.values.contains(where: { window in
+            guard !shared.activeWindows.contains(where: { window in
                 guard let root = window.rootPopoverController else { return false }
                 return root.config.popoverMode == .unique
                     || root.key == controller.key
@@ -47,15 +49,21 @@ public extension CLPopoverManager {
             switch controller.config.popoverMode {
             case .queue, .interrupt:
                 break
+            case .suspend:
+                shared.suspendedWindows[controller.key] = shared.activeWindows
+                shared.activeWindows.forEach { $0.isHidden = true }
+                shared.activeWindows.removeAll()
             case .replaceActive:
-                shared.windows.values.forEach { $0.isHidden = true }
-                shared.windows.removeAll()
+                shared.activeWindows.forEach { $0.isHidden = true }
+                shared.activeWindows.removeAll()
             case .replaceAll, .unique:
                 shared.waitQueue.removeAll()
-                shared.windows.values.forEach { $0.isHidden = true }
-                shared.windows.removeAll()
+                shared.suspendedWindows.values.flatMap { $0 }.forEach { $0.isHidden = true }
+                shared.suspendedWindows.removeAll()
+                shared.activeWindows.forEach { $0.isHidden = true }
+                shared.activeWindows.removeAll()
             }
-            if controller.config.popoverMode == .queue, !shared.windows.isEmpty {
+            if controller.config.popoverMode == .queue, !shared.activeWindows.isEmpty {
                 shared.waitQueue[controller.key] = (controller: controller, enqueueTime: Date())
                 return
             }
@@ -68,7 +76,7 @@ public extension CLPopoverManager {
         guard let key else { return }
         DispatchQueue.main.async {
             guard !shared.dismissingKeys.contains(key) else { return }
-            guard let window = shared.windows[key] else {
+            guard let window = shared.activeWindows.first(where: { $0.rootPopoverController?.key == key }) else {
                 shared.waitQueue.removeValue(forKey: key)
                 completion?()
                 return
@@ -77,15 +85,21 @@ public extension CLPopoverManager {
             window.rootPopoverController?.dismissAnimation {
                 window.isHidden = true
                 completion?()
-                shared.windows.removeValue(forKey: key)
+                shared.activeWindows.removeAll(where: { $0.rootPopoverController?.key == key })
                 shared.dismissingKeys.remove(key)
-                if shared.windows.isEmpty, shared.waitQueue.isEmpty { return dismissAll() }
-                guard shared.windows.isEmpty, let nextController = shared.waitQueue.values.sorted(by: {
+                if shared.activeWindows.isEmpty, shared.suspendedWindows.isEmpty, shared.waitQueue.isEmpty { return dismissAll() }
+                guard shared.activeWindows.isEmpty else { return }
+                if let windows = shared.suspendedWindows[key], !windows.isEmpty {
+                    windows.forEach { $0.isHidden = false }
+                    shared.activeWindows = windows
+                    shared.suspendedWindows.removeValue(forKey: key)
+                } else if let nextController = shared.waitQueue.values.sorted(by: {
                     $0.controller.config.popoverPriority != $1.controller.config.popoverPriority ?
                         $0.controller.config.popoverPriority > $1.controller.config.popoverPriority :
                         $0.enqueueTime < $1.enqueueTime
-                }).first?.controller else { return }
-                display(nextController)
+                }).first?.controller {
+                    display(nextController)
+                }
             }
         }
     }
@@ -95,8 +109,10 @@ public extension CLPopoverManager {
         DispatchQueue.main.async {
             shared.dismissingKeys.removeAll()
             shared.waitQueue.removeAll()
-            shared.windows.values.forEach { $0.isHidden = true }
-            shared.windows.removeAll()
+            shared.suspendedWindows.values.flatMap { $0 }.forEach { $0.isHidden = true }
+            shared.suspendedWindows.removeAll()
+            shared.activeWindows.forEach { $0.isHidden = true }
+            shared.activeWindows.removeAll()
         }
     }
 }
@@ -113,7 +129,7 @@ private extension CLPopoverManager {
         window.windowLevel = .alert + 50
         window.rootViewController = controller
         window.makeKeyAndVisible()
-        shared.windows[controller.key] = window
+        shared.activeWindows.append(window)
         shared.waitQueue.removeValue(forKey: controller.key)
         controller.showAnimation(completion: completion)
     }
