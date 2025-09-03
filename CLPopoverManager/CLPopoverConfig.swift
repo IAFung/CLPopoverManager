@@ -82,6 +82,8 @@ import UIKit
         case unique
     }
 
+    /// 弹窗的唯一标识符，用于去重
+    public var identifier: String?
     /// 弹窗模式
     public var popoverMode: CLDisplayMode = .queue
     /// 弹窗优先级，只影响等待队列
@@ -90,16 +92,14 @@ import UIKit
     public var allowsEventPenetration = false
     /// 手势穿透时是否自动隐藏
     public var autoHideWhenPenetrated = false
-    /// 是否自动旋转屏幕
+    /// 是否自动旋转屏幕，继承CLPopoverController才生效
     public var shouldAutorotate = false
-    /// 是否隐藏状态栏
+    /// 是否隐藏状态栏，继承CLPopoverController才生效
     public var prefersStatusBarHidden = false
-    /// 状态栏样式
+    /// 状态栏样式，继承CLPopoverController才生效
     public var preferredStatusBarStyle = UIStatusBarStyle.lightContent
-    /// 支持的界面方向
+    /// 支持的界面方向，继承CLPopoverController才生效
     public var supportedInterfaceOrientations = UIInterfaceOrientationMask.portrait
-    /// 用户界面样式，包括夜间模式
+    /// 用户界面样式，包括夜间模式，继承CLPopoverController才生效
     public var userInterfaceStyleOverride = CLUserInterfaceStyle.light
-    /// 弹窗的唯一标识符，用于去重
-    public var identifier: String?
 }

@@ -53,8 +53,8 @@ extension CLPopupMomentumController {
     }
 }
 
-extension CLPopupMomentumController: CLPopoverProtocol {
-    func showAnimation(completion: (() -> Void)?) {
+extension CLPopupMomentumController {
+    override func showAnimation(completion: (() -> Void)?) {
         view.setNeedsLayout()
         view.layoutIfNeeded()
         let height = momentumView.bounds.height
@@ -67,7 +67,7 @@ extension CLPopupMomentumController: CLPopoverProtocol {
         }
     }
 
-    func dismissAnimation(completion: (() -> Void)?) {
+    override func dismissAnimation(completion: (() -> Void)?) {
         view.setNeedsLayout()
         view.layoutIfNeeded()
         let height = momentumView.bounds.height

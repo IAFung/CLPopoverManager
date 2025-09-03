@@ -264,8 +264,8 @@ extension CLPopoverHudController {
     }
 }
 
-extension CLPopoverHudController: CLPopoverProtocol {
-    func showAnimation(completion: (() -> Void)? = nil) {
+extension CLPopoverHudController {
+    override func showAnimation(completion: (() -> Void)? = nil) {
         switch animationType {
         case .success:
             successAnimation()
@@ -277,7 +277,7 @@ extension CLPopoverHudController: CLPopoverProtocol {
         CLPopoverManager.dismiss(key)
     }
 
-    func dismissAnimation(completion: (() -> Void)? = nil) {
+    override func dismissAnimation(completion: (() -> Void)? = nil) {
         DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + dismissDuration + 0.6) {
             UIView.animate(withDuration: 0.3, animations: {
                 self.contentView.alpha = 0.0

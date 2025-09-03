@@ -122,8 +122,8 @@ extension CLPopupDataPickerController {
     }
 }
 
-extension CLPopupDataPickerController: CLPopoverProtocol {
-    func showAnimation(completion: (() -> Void)?) {
+extension CLPopupDataPickerController {
+    override func showAnimation(completion: (() -> Void)?) {
         view.setNeedsLayout()
         view.layoutIfNeeded()
         topToolBar.snp.updateConstraints { make in
@@ -138,7 +138,7 @@ extension CLPopupDataPickerController: CLPopoverProtocol {
         }
     }
 
-    func dismissAnimation(completion: (() -> Void)?) {
+    override func dismissAnimation(completion: (() -> Void)?) {
         topToolBar.snp.updateConstraints { make in
             make.top.equalTo(view.snp.bottom)
         }
