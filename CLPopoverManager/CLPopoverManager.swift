@@ -53,9 +53,28 @@ public extension CLPopoverManager {
                 shared.suspendedWindows[controller.key] = shared.activeWindows
                 shared.activeWindows.forEach { $0.isHidden = true }
                 shared.activeWindows.removeAll()
-            case .replaceActive:
-                shared.activeWindows.forEach { $0.isHidden = true }
+            case .replaceInheritSuspend:
+                let windowsToReplace = shared.activeWindows
+                windowsToReplace.forEach { $0.isHidden = true }
                 shared.activeWindows.removeAll()
+
+                var allInheritedSuspended = [CLPopoverWindow]()
+                for window in windowsToReplace {
+                    guard let replacedKey = window.rootPopoverController?.key else { continue }
+                    guard let suspended = shared.suspendedWindows.removeValue(forKey: replacedKey) else { continue }
+                    allInheritedSuspended.append(contentsOf: suspended)
+                }
+                guard !allInheritedSuspended.isEmpty else { break }
+                shared.suspendedWindows[controller.key] = allInheritedSuspended
+            case .replaceClearSuspend:
+                let windowsToReplace = shared.activeWindows
+                windowsToReplace.forEach { $0.isHidden = true }
+                shared.activeWindows.removeAll()
+                for window in windowsToReplace {
+                    guard let replacedKey = window.rootPopoverController?.key else { continue }
+                    guard let suspendedToClear = shared.suspendedWindows.removeValue(forKey: replacedKey) else { continue }
+                    suspendedToClear.forEach { $0.isHidden = true }
+                }
             case .replaceAll, .unique:
                 shared.waitQueue.removeAll()
                 shared.suspendedWindows.values.flatMap { $0 }.forEach { $0.isHidden = true }

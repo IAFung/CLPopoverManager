@@ -247,7 +247,7 @@ extension CLPopupController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             CLPopoverManager.showTwoAlert(configCallback: { configure in
                 configure.shouldAutorotate = true
-                configure.popoverMode = .replaceActive
+                configure.popoverMode = .replaceInheritSuspend
                 configure.supportedInterfaceOrientations = .all
             }, title: "我是两个按钮", message: "我有两个按钮")
             CLPopoverManager.showDrag()
@@ -305,9 +305,22 @@ extension CLPopupController {
     }
 
     func showBMIInput() {
-        CLPopoverManager.showBMIInput(bmiCallback: { bmi in
+        CLPopoverManager.showBMIInput(configCallback: { config in
+        }, bmiCallback: { bmi in
             print("BMI-----\(bmi)")
         })
+        CLPopoverManager.showOneInput(configCallback: { config in
+            config.popoverMode = .suspend
+        }, type: .pulse) { value in
+            print("-----\(String(describing: value))")
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            CLPopoverManager.showOneInput(configCallback: { config in
+                config.popoverMode = .replaceInheritSuspend
+            }, type: .heartRate) { value in
+                print("-----\(String(describing: value))")
+            }
+        }
     }
 
     func showOneInput() {

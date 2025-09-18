@@ -74,8 +74,10 @@ import UIKit
         case interrupt
         /// 挂起当前可见的所有弹窗，并显示自己，当自己消失后，恢复被挂起的弹窗
         case suspend
-        /// 替换当正在显示的弹窗，不会移除被挂起的弹窗，也不会移除等待中的弹窗
-        case replaceActive
+        /// 替换当前正在显示的弹窗，并继承其挂起链，不会移除等待中的弹窗
+        case replaceInheritSuspend
+        /// 替换当前已显示弹窗，并清除其挂起链，不会移除等待中的弹窗
+        case replaceClearSuspend
         /// 替换当前正在显示的弹窗，会移除被挂起的弹窗，也会移除等待中的弹窗
         case replaceAll
         /// 唯一，替换当前正在显示的弹窗，会移除被挂起的弹窗，也会移除等待中的弹窗，会阻止后续所有弹窗
